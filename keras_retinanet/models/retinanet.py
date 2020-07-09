@@ -15,6 +15,7 @@ limitations under the License.
 """
 
 import keras
+import tensorflow as tf
 from .. import initializers
 from .. import layers
 from ..utils.anchors import AnchorParameters
@@ -57,14 +58,14 @@ def default_classification_model(
             filters=classification_feature_size,
             activation='relu',
             name='pyramid_classification_{}'.format(i),
-            kernel_initializer=keras.initializers.normal(mean=0.0, stddev=0.01, seed=None),
+            kernel_initializer=tf.random_normal_initializer(mean=0.0, stddev=0.01, seed=None),
             bias_initializer='zeros',
             **options
         )(outputs)
 
     outputs = keras.layers.Conv2D(
         filters=num_classes * num_anchors,
-        kernel_initializer=keras.initializers.normal(mean=0.0, stddev=0.01, seed=None),
+        kernel_initializer=tf.random_normal_initializer(mean=0.0, stddev=0.01, seed=None),
         bias_initializer=initializers.PriorProbability(probability=prior_probability),
         name='pyramid_classification',
         **options
@@ -99,7 +100,7 @@ def default_regression_model(num_values, num_anchors, pyramid_feature_size=256, 
         'kernel_size'        : 3,
         'strides'            : 1,
         'padding'            : 'same',
-        'kernel_initializer' : keras.initializers.normal(mean=0.0, stddev=0.01, seed=None),
+        'kernel_initializer' : tf.random_normal_initializer(mean=0.0, stddev=0.01, seed=None),
         'bias_initializer'   : 'zeros'
     }
 
