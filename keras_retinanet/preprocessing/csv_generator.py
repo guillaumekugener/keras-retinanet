@@ -93,9 +93,50 @@ def _read_annotations(csv_reader, classes):
 
         # check if the current class name is correctly present
         if class_name not in classes:
-            raise ValueError('line {}: unknown class name: \'{}\' (classes: {})'.format(line, class_name, classes))
+            # instead, weill will just skip this row
+            continue
+            # raise ValueError('line {}: unknown class name: \'{}\' (classes: {})'.format(line, class_name, classes))
+
 
         result[img_file].append({'x1': x1, 'x2': x2, 'y1': y1, 'y2': y2, 'class': class_name})
+    return result
+
+def _read_annotations_with_score(csv_reader, classes):
+    """ Read annotations from the csv_reader.
+    """
+    result = OrderedDict()
+    for line, row in enumerate(csv_reader):
+        line += 1
+
+        try:
+            img_file, score, x1, y1, x2, y2, class_name = row[:7]
+        except ValueError:
+            raise_from(ValueError('line {}: format should be \'img_file,score,x1,y1,x2,y2,class_name\' or \'img_file,,,,,\''.format(line)), None)
+
+        if img_file not in result:
+            result[img_file] = []
+
+        # If a row contains only an image path, it's an image without annotations.
+        if (x1, y1, x2, y2, class_name) == ('', '', '', '', ''):
+            continue
+
+        score = _parse(score, float, 'line {}: malformed x1: {{}}'.format(line))
+        x1 = _parse(x1, int, 'line {}: malformed x1: {{}}'.format(line))
+        y1 = _parse(y1, int, 'line {}: malformed y1: {{}}'.format(line))
+        x2 = _parse(x2, int, 'line {}: malformed x2: {{}}'.format(line))
+        y2 = _parse(y2, int, 'line {}: malformed y2: {{}}'.format(line))
+
+        # Check that the bounding box is valid.
+        if x2 <= x1:
+            raise ValueError('line {}: x2 ({}) must be higher than x1 ({})'.format(line, x2, x1))
+        if y2 <= y1:
+            raise ValueError('line {}: y2 ({}) must be higher than y1 ({})'.format(line, y2, y1))
+
+        # check if the current class name is correctly present
+        if class_name not in classes:
+            raise ValueError('line {}: unknown class name: \'{}\' (classes: {})'.format(line, class_name, classes))
+
+        result[img_file].append({'score': score, 'x1': x1, 'x2': x2, 'y1': y1, 'y2': y2, 'class': class_name})
     return result
 
 
